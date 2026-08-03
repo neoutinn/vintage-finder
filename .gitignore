@@ -8,6 +8,13 @@
 # production
 /build
 
+# electron build output
+/dist-electron
+/release
+
+# local browser session profiles (Depop/Facebook login cookies) - never commit
+/.vintage-finder-data
+
 # env files (never commit real secrets)
 .env
 .env.local

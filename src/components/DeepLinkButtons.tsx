@@ -1,8 +1,17 @@
 import { buildDeepLinks } from '@/lib/deepLinks';
 import styles from './DeepLinkButtons.module.css';
 
-export default function DeepLinkButtons({ query }: { query: string }) {
-  const links = buildDeepLinks(query);
+type Props = {
+  query: string;
+  connected: { depop: boolean; facebook: boolean };
+};
+
+export default function DeepLinkButtons({ query, connected }: Props) {
+  const links = buildDeepLinks(query, connected);
+
+  if (links.length === 0) {
+    return null;
+  }
 
   return (
     <div className={styles.wrapper}>

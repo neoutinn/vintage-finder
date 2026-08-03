@@ -1,6 +1,8 @@
+export type Source = 'ebay' | 'etsy' | 'depop' | 'facebook';
+
 export type NormalizedResult = {
   id: string;
-  source: 'ebay' | 'etsy';
+  source: Source;
   title: string;
   price: number;
   currency: string;
@@ -17,6 +19,6 @@ export type SearchFilters = {
 };
 
 export type ProviderError = {
-  source: 'ebay' | 'etsy';
+  source: Source;
   message: string;
 };

@@ -1,0 +1,34 @@
+appId: com.neoutinn.vintagefinder
+productName: Vintage Finder
+directories:
+  output: release
+
+# Only the compiled Electron shell is packaged as app code; the Next.js
+# server comes in fully self-contained via extraResources below.
+files:
+  - dist-electron/**/*
+  - package.json
+
+extraResources:
+  - from: .next/standalone
+    to: standalone
+  - from: .next/static
+    to: standalone/.next/static
+  - from: public
+    to: standalone/public
+
+# Playwright/Patchright ship native browser binaries that must not be
+# packed into the asar archive.
+asarUnpack:
+  - '**/node_modules/playwright-core/**'
+  - '**/node_modules/patchright/**'
+
+# No custom icon.ico yet - electron-builder falls back to its default icon
+# until you add one at build/icon.ico and uncomment the `icon:` line below.
+win:
+  target: nsis
+  # icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
