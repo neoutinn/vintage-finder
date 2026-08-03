@@ -1,0 +1,39 @@
+.main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.heading {
+  font-family: var(--font-display), monospace;
+  font-size: 3rem;
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.version {
+  font-size: 1.5rem;
+  opacity: 0.7;
+}
+
+.subheading {
+  margin: -1rem 0 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  opacity: 0.8;
+}
+
+.status {
+  font-family: var(--font-display), monospace;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
