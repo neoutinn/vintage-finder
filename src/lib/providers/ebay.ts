@@ -34,6 +34,12 @@ type EbayItemDetail = {
   localizedAspects?: EbayAspect[];
 };
 
+// Loose match so "32x34" / "32 X 34" / "32X34" (or "M" / "m") count as the
+// same size — eBay sellers don't agree on casing or spacing.
+function normalizeSize(value: string): string {
+  return value.replace(/\s+/g, '').toUpperCase();
+}
+
 function buildFilter(filters: SearchFilters): string | undefined {
   const parts: string[] = [];
 
@@ -82,7 +88,13 @@ async function fetchItemSize(itemId: string, token: string): Promise<string | un
 export async function searchEbay(filters: SearchFilters): Promise<NormalizedResult[]> {
   const token = await ensureEbayToken();
 
-  const params = new URLSearchParams({ q: filters.query, limit: '24' });
+  // eBay's search endpoint has no Size field/filter to query against (see
+  // fetchItemSize below), so a requested size is folded into the free-text
+  // query instead — sellers of shoes/shirts/pants/etc. almost always put the
+  // size in the title, so this biases eBay's own relevance ranking toward
+  // matching listings before the hard filter below narrows to real matches.
+  const query = filters.size ? `${filters.query} ${filters.size}` : filters.query;
+  const params = new URLSearchParams({ q: query, limit: '24' });
   const filter = buildFilter(filters);
   if (filter) {
     params.set('filter', filter);
@@ -103,7 +115,7 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
   const items = data.itemSummaries ?? [];
   const sizes = await Promise.all(items.map((item) => fetchItemSize(item.itemId, token)));
 
-  return items.map((item, i) => ({
+  const results = items.map((item, i) => ({
     id: item.itemId,
     source: 'ebay' as const,
     title: item.title,
@@ -114,4 +126,15 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
     condition: item.condition,
     size: sizes[i],
   }));
+
+  if (!filters.size) {
+    return results;
+  }
+
+  // Hard filter down to confirmed matches using the real per-item Size
+  // aspect fetched above, now that the text bias has surfaced candidates.
+  // A listing with no Size aspect on file can't be confirmed, so it's
+  // dropped here rather than shown as a maybe-match.
+  const wanted = normalizeSize(filters.size);
+  return results.filter((result) => result.size && normalizeSize(result.size) === wanted);
 }

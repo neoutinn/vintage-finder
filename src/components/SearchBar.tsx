@@ -8,6 +8,7 @@ export type SearchSubmitValues = {
   minPrice?: number;
   maxPrice?: number;
   usedOnly: boolean;
+  size?: string;
 };
 
 type Props = {
@@ -20,6 +21,7 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [usedOnly, setUsedOnly] = useState(true);
+  const [size, setSize] = useState('');
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -31,6 +33,7 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       usedOnly,
+      size: size.trim() || undefined,
     });
   }
 
@@ -72,6 +75,19 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
           min="0"
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
+        />
+
+        <label className={styles.label} htmlFor="size">
+          SIZE
+        </label>
+        <input
+          id="size"
+          className={styles.textInput}
+          type="text"
+          value={size}
+          onChange={(e) => setSize(e.target.value)}
+          placeholder="M, 9.5, 32x34..."
+          autoComplete="off"
         />
       </div>
 

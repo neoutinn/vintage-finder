@@ -12,12 +12,14 @@ function parseFilters(searchParams: URLSearchParams): SearchFilters | null {
 
   const minPriceRaw = searchParams.get('minPrice');
   const maxPriceRaw = searchParams.get('maxPrice');
+  const size = searchParams.get('size')?.trim();
 
   return {
     query,
     minPrice: minPriceRaw ? Number(minPriceRaw) : undefined,
     maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
     usedOnly: searchParams.get('usedOnly') === 'true',
+    size: size || undefined,
   };
 }
 
