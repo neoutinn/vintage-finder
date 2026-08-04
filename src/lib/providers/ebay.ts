@@ -40,6 +40,19 @@ function normalizeSize(value: string): string {
   return value.replace(/\s+/g, '').toUpperCase();
 }
 
+// Matches a fetched item size against one requested size. Waist-only picks
+// ("32") also match "32x34"-style waist-by-inseam listings, since bottoms
+// only offer a waist checkbox — but only for purely numeric sizes, so this
+// never loosely matches letter sizes like "M".
+function sizeMatches(itemSize: string, wanted: string): boolean {
+  const itemNorm = normalizeSize(itemSize);
+  const wantedNorm = normalizeSize(wanted);
+  if (itemNorm === wantedNorm) {
+    return true;
+  }
+  return /^\d+$/.test(wantedNorm) && itemNorm.startsWith(`${wantedNorm}X`);
+}
+
 function buildFilter(filters: SearchFilters): string | undefined {
   const parts: string[] = [];
 
@@ -89,12 +102,18 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
   const token = await ensureEbayToken();
 
   // eBay's search endpoint has no Size field/filter to query against (see
-  // fetchItemSize below), so a requested size is folded into the free-text
-  // query instead — sellers of shoes/shirts/pants/etc. almost always put the
-  // size in the title, so this biases eBay's own relevance ranking toward
-  // matching listings before the hard filter below narrows to real matches.
-  const query = filters.size ? `${filters.query} ${filters.size}` : filters.query;
-  const params = new URLSearchParams({ q: query, limit: '24' });
+  // fetchItemSize below), so a single requested size is folded into the
+  // free-text query instead — sellers of shoes/shirts/pants/etc. almost
+  // always put the size in the title, so this biases eBay's own relevance
+  // ranking toward matching listings before the hard filter below narrows
+  // to real matches. With multiple sizes selected, appending every one of
+  // them as extra keywords would bias search toward listings that mention
+  // ALL of them (nonsensical), so the query is left alone and the fetch
+  // limit is raised instead to widen the pre-filter candidate pool.
+  const singleSize = filters.sizes?.length === 1 ? filters.sizes[0] : undefined;
+  const query = singleSize ? `${filters.query} ${singleSize}` : filters.query;
+  const limit = filters.sizes && filters.sizes.length > 1 ? '48' : '24';
+  const params = new URLSearchParams({ q: query, limit });
   const filter = buildFilter(filters);
   if (filter) {
     params.set('filter', filter);
@@ -127,14 +146,15 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
     size: sizes[i],
   }));
 
-  if (!filters.size) {
+  if (!filters.sizes || filters.sizes.length === 0) {
     return results;
   }
 
   // Hard filter down to confirmed matches using the real per-item Size
-  // aspect fetched above, now that the text bias has surfaced candidates.
-  // A listing with no Size aspect on file can't be confirmed, so it's
-  // dropped here rather than shown as a maybe-match.
-  const wanted = normalizeSize(filters.size);
-  return results.filter((result) => result.size && normalizeSize(result.size) === wanted);
+  // aspect fetched above, now that the text bias (single size) or wider
+  // fetch limit (multiple sizes) has surfaced candidates. A listing with no
+  // Size aspect on file can't be confirmed, so it's dropped here rather
+  // than shown as a maybe-match. Any one of the selected sizes counts.
+  const wanted = filters.sizes;
+  return results.filter((result) => result.size && wanted.some((size) => sizeMatches(result.size!, size)));
 }

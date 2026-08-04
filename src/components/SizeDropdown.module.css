@@ -1,0 +1,62 @@
+.wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.35rem;
+  background: #000;
+  border: 1px solid #fff;
+  padding: 0.85rem;
+  z-index: 10;
+  width: max-content;
+  max-width: min(90vw, 26rem);
+  max-height: 18rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.groupLabel {
+  font-family: var(--font-display), monospace;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 0.2rem;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.option:hover {
+  border-color: #fff;
+}
+
+.clearButton {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
+}

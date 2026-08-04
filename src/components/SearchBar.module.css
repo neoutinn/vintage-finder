@@ -30,11 +30,6 @@
   padding: 0.4rem 0.5rem;
 }
 
-.textInput {
-  width: 9rem;
-  padding: 0.4rem 0.5rem;
-}
-
 .checkboxRow {
   display: flex;
   align-items: center;

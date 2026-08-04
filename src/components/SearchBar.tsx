@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import SizeDropdown from './SizeDropdown';
 import styles from './SearchBar.module.css';
 
 export type SearchSubmitValues = {
@@ -8,7 +9,7 @@ export type SearchSubmitValues = {
   minPrice?: number;
   maxPrice?: number;
   usedOnly: boolean;
-  size?: string;
+  sizes?: string[];
 };
 
 type Props = {
@@ -21,7 +22,7 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [usedOnly, setUsedOnly] = useState(true);
-  const [size, setSize] = useState('');
+  const [sizes, setSizes] = useState<string[]>([]);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -33,7 +34,7 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       usedOnly,
-      size: size.trim() || undefined,
+      sizes: sizes.length > 0 ? sizes : undefined,
     });
   }
 
@@ -77,18 +78,7 @@ export default function SearchBar({ onSubmit, isSearching }: Props) {
           onChange={(e) => setMaxPrice(e.target.value)}
         />
 
-        <label className={styles.label} htmlFor="size">
-          SIZE
-        </label>
-        <input
-          id="size"
-          className={styles.textInput}
-          type="text"
-          value={size}
-          onChange={(e) => setSize(e.target.value)}
-          placeholder="M, 9.5, 32x34..."
-          autoComplete="off"
-        />
+        <SizeDropdown selected={sizes} onChange={setSizes} />
       </div>
 
       <label className={styles.checkboxRow} htmlFor="usedOnly">

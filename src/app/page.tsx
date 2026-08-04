@@ -27,7 +27,7 @@ export default function Home() {
     const params = new URLSearchParams({ q: values.query, usedOnly: String(values.usedOnly) });
     if (values.minPrice !== undefined) params.set('minPrice', String(values.minPrice));
     if (values.maxPrice !== undefined) params.set('maxPrice', String(values.maxPrice));
-    if (values.size) params.set('size', values.size);
+    for (const size of values.sizes ?? []) params.append('size', size);
 
     try {
       const response = await fetch(`/api/search?${params.toString()}`);

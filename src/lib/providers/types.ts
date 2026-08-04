@@ -17,7 +17,7 @@ export type SearchFilters = {
   minPrice?: number;
   maxPrice?: number;
   usedOnly?: boolean;
-  size?: string;
+  sizes?: string[];
 };
 
 export type ProviderError = {
