@@ -9,7 +9,7 @@
 
 .heading {
   font-family: var(--font-display), monospace;
-  font-size: 3rem;
+  font-size: clamp(2rem, 9vw, 3rem);
   margin: 0;
   letter-spacing: 0.03em;
 }

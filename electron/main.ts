@@ -46,6 +46,10 @@ async function startNextServer(): Promise<string> {
     PORT: String(port),
     HOSTNAME: '127.0.0.1',
     VINTAGE_FINDER_DATA_DIR: dataDir,
+    // The hosted deployment (see middleware.ts) sits behind a Basic Auth
+    // password gate since it's reachable from the open internet; this local
+    // desktop server never leaves 127.0.0.1, so there's nothing to gate.
+    VINTAGE_FINDER_LOCAL: '1',
   };
 
   if (app.isPackaged) {
