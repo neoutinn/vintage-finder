@@ -18,6 +18,13 @@ export type SearchFilters = {
   maxPrice?: number;
   usedOnly?: boolean;
   sizes?: string[];
+  offset?: number;
+};
+
+export type SearchPage = {
+  results: NormalizedResult[];
+  total: number;
+  hasMore: boolean;
 };
 
 export type ProviderError = {

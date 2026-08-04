@@ -1,5 +1,5 @@
 import { ensureEbayToken } from '../ebayTokenCache';
-import type { NormalizedResult, SearchFilters } from './types';
+import type { SearchFilters, SearchPage } from './types';
 
 const SEARCH_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search';
 const ITEM_URL = 'https://api.ebay.com/buy/browse/v1/item';
@@ -26,6 +26,7 @@ type EbayItemSummary = {
 
 type EbaySearchResponse = {
   itemSummaries?: EbayItemSummary[];
+  total?: number;
 };
 
 type EbayAspect = { name?: string; value?: string };
@@ -98,7 +99,16 @@ async function fetchItemSize(itemId: string, token: string): Promise<string | un
   }
 }
 
-export async function searchEbay(filters: SearchFilters): Promise<NormalizedResult[]> {
+// Per-page size, not a hard cap — the API route pages through offset so a
+// caller can page through "all" of eBay's matches for a query. Kept modest
+// rather than eBay's max (200) since every result here costs one extra
+// getItem call for its size (see fetchItemSize): a 200-item page would be
+// 201 calls in one request, risking a slow/timed-out response and burning
+// through the daily quota fast. Small, repeatable pages instead.
+const PAGE_SIZE = 24;
+const PAGE_SIZE_WIDE = 48;
+
+export async function searchEbay(filters: SearchFilters): Promise<SearchPage> {
   const token = await ensureEbayToken();
 
   // eBay's search endpoint has no Size field/filter to query against (see
@@ -108,12 +118,13 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
   // ranking toward matching listings before the hard filter below narrows
   // to real matches. With multiple sizes selected, appending every one of
   // them as extra keywords would bias search toward listings that mention
-  // ALL of them (nonsensical), so the query is left alone and the fetch
-  // limit is raised instead to widen the pre-filter candidate pool.
+  // ALL of them (nonsensical), so the query is left alone and the page
+  // size is widened instead to broaden the pre-filter candidate pool.
   const singleSize = filters.sizes?.length === 1 ? filters.sizes[0] : undefined;
   const query = singleSize ? `${filters.query} ${singleSize}` : filters.query;
-  const limit = filters.sizes && filters.sizes.length > 1 ? '48' : '24';
-  const params = new URLSearchParams({ q: query, limit });
+  const limit = filters.sizes && filters.sizes.length > 1 ? PAGE_SIZE_WIDE : PAGE_SIZE;
+  const offset = filters.offset ?? 0;
+  const params = new URLSearchParams({ q: query, limit: String(limit), offset: String(offset) });
   const filter = buildFilter(filters);
   if (filter) {
     params.set('filter', filter);
@@ -132,9 +143,10 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
 
   const data = (await response.json()) as EbaySearchResponse;
   const items = data.itemSummaries ?? [];
+  const total = data.total ?? 0;
   const sizes = await Promise.all(items.map((item) => fetchItemSize(item.itemId, token)));
 
-  const results = items.map((item, i) => ({
+  let results = items.map((item, i) => ({
     id: item.itemId,
     source: 'ebay' as const,
     title: item.title,
@@ -146,15 +158,18 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
     size: sizes[i],
   }));
 
-  if (!filters.sizes || filters.sizes.length === 0) {
-    return results;
-  }
-
   // Hard filter down to confirmed matches using the real per-item Size
   // aspect fetched above, now that the text bias (single size) or wider
-  // fetch limit (multiple sizes) has surfaced candidates. A listing with no
-  // Size aspect on file can't be confirmed, so it's dropped here rather
-  // than shown as a maybe-match. Any one of the selected sizes counts.
-  const wanted = filters.sizes;
-  return results.filter((result) => result.size && wanted.some((size) => sizeMatches(result.size!, size)));
+  // page (multiple sizes) has surfaced candidates. A listing with no Size
+  // aspect on file can't be confirmed, so it's dropped here rather than
+  // shown as a maybe-match. Any one of the selected sizes counts. Note this
+  // means a page can come back with fewer visible results than requested,
+  // or even zero, while more still remain further into eBay's own result
+  // set — hasMore below is based on eBay's raw total, not the filtered count.
+  if (filters.sizes && filters.sizes.length > 0) {
+    const wanted = filters.sizes;
+    results = results.filter((result) => result.size && wanted.some((size) => sizeMatches(result.size!, size)));
+  }
+
+  return { results, total, hasMore: offset + items.length < total };
 }

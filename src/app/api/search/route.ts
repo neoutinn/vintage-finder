@@ -12,6 +12,7 @@ function parseFilters(searchParams: URLSearchParams): SearchFilters | null {
 
   const minPriceRaw = searchParams.get('minPrice');
   const maxPriceRaw = searchParams.get('maxPrice');
+  const offsetRaw = searchParams.get('offset');
   const sizes = searchParams.getAll('size').map((s) => s.trim()).filter(Boolean);
 
   return {
@@ -20,6 +21,7 @@ function parseFilters(searchParams: URLSearchParams): SearchFilters | null {
     maxPrice: maxPriceRaw ? Number(maxPriceRaw) : undefined,
     usedOnly: searchParams.get('usedOnly') === 'true',
     sizes: sizes.length > 0 ? sizes : undefined,
+    offset: offsetRaw ? Number(offsetRaw) : undefined,
   };
 }
 
@@ -31,14 +33,17 @@ export async function GET(request: NextRequest) {
 
   const results: NormalizedResult[] = [];
   const errors: ProviderError[] = [];
+  let hasMore = false;
 
   try {
-    results.push(...(await searchEbay(filters)));
+    const page = await searchEbay(filters);
+    results.push(...page.results);
+    hasMore = page.hasMore;
   } catch (err) {
     errors.push({ source: 'ebay', message: err instanceof Error ? err.message : 'eBay search failed' });
   }
 
   results.sort((a, b) => a.price - b.price);
 
-  return NextResponse.json({ results, errors });
+  return NextResponse.json({ results, errors, hasMore });
 }
