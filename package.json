@@ -13,17 +13,17 @@
     "dist": "npm run build && npm run electron:compile && electron-builder --win"
   },
   "dependencies": {
-    "next": "14.2.15",
+    "next": "^14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "typescript": "5.5.4",
     "@types/node": "20.14.2",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "electron": "33.2.0",
-    "electron-builder": "25.1.8"
+    "electron-builder": "25.1.8",
+    "typescript": "5.5.4"
   },
   "allowScripts": {
     "electron@33.2.0": true
