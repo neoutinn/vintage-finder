@@ -1,4 +1,4 @@
-export type Source = 'ebay' | 'etsy' | 'depop' | 'facebook';
+export type Source = 'ebay';
 
 export type NormalizedResult = {
   id: string;

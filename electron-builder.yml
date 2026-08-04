@@ -17,12 +17,6 @@ extraResources:
   - from: public
     to: standalone/public
 
-# Playwright/Patchright ship native browser binaries that must not be
-# packed into the asar archive.
-asarUnpack:
-  - '**/node_modules/playwright-core/**'
-  - '**/node_modules/patchright/**'
-
 # No custom icon.ico yet - electron-builder falls back to its default icon
 # until you add one at build/icon.ico and uncomment the `icon:` line below.
 win:

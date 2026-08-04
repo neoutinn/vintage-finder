@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchEbay } from '@/lib/providers/ebay';
-import { searchEtsy } from '@/lib/providers/etsy';
 import type { NormalizedResult, ProviderError, SearchFilters } from '@/lib/providers/types';
 
 export const dynamic = 'force-dynamic';
@@ -28,24 +27,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing required "q" query parameter' }, { status: 400 });
   }
 
-  const [ebayOutcome, etsyOutcome] = await Promise.allSettled([
-    searchEbay(filters),
-    searchEtsy(filters),
-  ]);
-
   const results: NormalizedResult[] = [];
   const errors: ProviderError[] = [];
 
-  if (ebayOutcome.status === 'fulfilled') {
-    results.push(...ebayOutcome.value);
-  } else {
-    errors.push({ source: 'ebay', message: ebayOutcome.reason?.message ?? 'eBay search failed' });
-  }
-
-  if (etsyOutcome.status === 'fulfilled') {
-    results.push(...etsyOutcome.value);
-  } else {
-    errors.push({ source: 'etsy', message: etsyOutcome.reason?.message ?? 'Etsy search failed' });
+  try {
+    results.push(...(await searchEbay(filters)));
+  } catch (err) {
+    errors.push({ source: 'ebay', message: err instanceof Error ? err.message : 'eBay search failed' });
   }
 
   results.sort((a, b) => a.price - b.price);
