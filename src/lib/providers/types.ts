@@ -9,6 +9,7 @@ export type NormalizedResult = {
   imageUrl?: string;
   itemUrl: string;
   condition?: string;
+  size?: string;
 };
 
 export type SearchFilters = {

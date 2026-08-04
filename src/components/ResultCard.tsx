@@ -17,7 +17,10 @@ export default function ResultCard({ result }: { result: NormalizedResult }) {
         <span>
           ${result.price.toFixed(2)} {result.currency}
         </span>
-        <span className={styles.source}>{result.source.toUpperCase()}</span>
+        <span className={styles.badges}>
+          {result.size && <span className={styles.size}>{result.size}</span>}
+          <span className={styles.source}>{result.source.toUpperCase()}</span>
+        </span>
       </div>
 
       <a

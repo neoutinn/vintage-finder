@@ -1,8 +1,15 @@
 # Vintage Finder
 
-A black-and-white, early-computer-terminal styled desktop app for finding vintage
-clothing. One query box searches **eBay** live via its official Browse API, plus a
-**Poshmark** deep-link button (no public API, opens a pre-filled search in a new tab).
+An early-computer-terminal styled desktop app for finding vintage clothing — one query
+box searches **eBay** live via its official Browse API. The UI chrome is black-and-white
+retro terminal; result preview images stay in full color.
+
+Each result card also shows a **size badge** when eBay has it: the search API doesn't
+expose size on its own, so the app makes one extra `getItem` call per result to pull it
+from that listing's item specifics. A listing with no Size aspect on file just shows no
+badge. This means a single search burns roughly (1 + number of results shown) calls
+against your daily quota instead of just 1 — still nowhere near the free tier's
+5,000 calls/day for personal use, but worth knowing if you ever raise the result limit.
 
 Packaged as a personal Windows desktop app (Electron), not a hosted website — everything
 runs locally on your machine.
@@ -80,10 +87,9 @@ one.
 ```
 src/app/page.tsx                 # search UI, results grid
 src/app/api/search/route.ts      # eBay Browse API search
-src/lib/providers/ebay.ts        # eBay Browse API client
+src/lib/providers/ebay.ts        # eBay Browse API client (search + per-item size lookup)
 src/lib/ebayTokenCache.ts        # caches the eBay OAuth token between requests
-src/lib/deepLinks.ts             # Poshmark deep-link
-src/components/                  # SearchBar, ResultCard, DeepLinkButtons, etc.
+src/components/                  # SearchBar, ResultCard, ProviderErrorBanner, etc.
 electron/main.ts                 # spawns the Next.js server, owns the app window
 electron-builder.yml             # Windows packaging config
 ```

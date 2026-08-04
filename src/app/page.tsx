@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import SearchBar, { SearchSubmitValues } from '@/components/SearchBar';
 import ResultCard from '@/components/ResultCard';
-import DeepLinkButtons from '@/components/DeepLinkButtons';
 import ProviderErrorBanner from '@/components/ProviderErrorBanner';
 import type { NormalizedResult, ProviderError } from '@/lib/providers/types';
 import styles from './page.module.css';
@@ -50,7 +49,7 @@ export default function Home() {
   return (
     <main className={styles.main}>
       <h1 className={`${styles.heading} glow`}>
-        VINTAGE FINDER <span className={styles.version}>v3.0</span>
+        VINTAGE FINDER <span className={styles.version}>v3.1</span>
       </h1>
       <p className={styles.subheading}>EBAY LIVE SEARCH TERMINAL</p>
 
@@ -59,8 +58,6 @@ export default function Home() {
       {fetchError && <div className="terminal-box">[!] {fetchError}</div>}
 
       <ProviderErrorBanner errors={errors} />
-
-      {lastQuery && <DeepLinkButtons query={lastQuery} />}
 
       {isSearching && <div className={`${styles.status} cursor`}>SEARCHING</div>}
 

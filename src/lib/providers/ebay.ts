@@ -2,9 +2,14 @@ import { ensureEbayToken } from '../ebayTokenCache';
 import type { NormalizedResult, SearchFilters } from './types';
 
 const SEARCH_URL = 'https://api.ebay.com/buy/browse/v1/item_summary/search';
+const ITEM_URL = 'https://api.ebay.com/buy/browse/v1/item';
 
 // eBay condition ID for "Used" — the umbrella condition for pre-owned/vintage items.
 const USED_CONDITION_ID = '3000';
+
+// Item specifics that commonly carry the size on clothing/shoe listings, in
+// priority order — sellers use whichever their category template offers.
+const SIZE_ASPECT_NAMES = ['Size', 'Size Type', 'US Shoe Size', 'Shoe Size', 'UK Size', 'EU Size'];
 
 type EbayItemSummary = {
   itemId: string;
@@ -17,6 +22,12 @@ type EbayItemSummary = {
 
 type EbaySearchResponse = {
   itemSummaries?: EbayItemSummary[];
+};
+
+type EbayAspect = { name?: string; value?: string };
+
+type EbayItemDetail = {
+  localizedAspects?: EbayAspect[];
 };
 
 function buildFilter(filters: SearchFilters): string | undefined {
@@ -32,6 +43,36 @@ function buildFilter(filters: SearchFilters): string | undefined {
   }
 
   return parts.length > 0 ? parts.join(',') : undefined;
+}
+
+/**
+ * The search endpoint's ItemSummary has no Size field — only the per-item
+ * getItem endpoint's `localizedAspects` does. One extra call per result
+ * shown, fetched in parallel; a failure here just means that card shows no
+ * size badge, it never fails the overall search.
+ */
+async function fetchItemSize(itemId: string, token: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(`${ITEM_URL}/${encodeURIComponent(itemId)}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+      },
+    });
+    if (!response.ok) {
+      return undefined;
+    }
+    const data = (await response.json()) as EbayItemDetail;
+    for (const name of SIZE_ASPECT_NAMES) {
+      const match = data.localizedAspects?.find((aspect) => aspect.name === name);
+      if (match?.value) {
+        return match.value;
+      }
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function searchEbay(filters: SearchFilters): Promise<NormalizedResult[]> {
@@ -55,8 +96,10 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
   }
 
   const data = (await response.json()) as EbaySearchResponse;
+  const items = data.itemSummaries ?? [];
+  const sizes = await Promise.all(items.map((item) => fetchItemSize(item.itemId, token)));
 
-  return (data.itemSummaries ?? []).map((item) => ({
+  return items.map((item, i) => ({
     id: item.itemId,
     source: 'ebay' as const,
     title: item.title,
@@ -65,5 +108,6 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
     imageUrl: item.image?.imageUrl,
     itemUrl: item.itemWebUrl,
     condition: item.condition,
+    size: sizes[i],
   }));
 }

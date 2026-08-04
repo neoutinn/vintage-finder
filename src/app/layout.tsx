@@ -16,7 +16,7 @@ const bodyFont = Share_Tech_Mono({
 
 export const metadata: Metadata = {
   title: 'VINTAGE FINDER',
-  description: 'Search vintage clothing across eBay, Etsy, Depop, Poshmark, and Facebook Marketplace from one terminal.',
+  description: 'Search vintage clothing live on eBay from one retro terminal.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
