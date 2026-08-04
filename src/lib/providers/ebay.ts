@@ -7,6 +7,10 @@ const ITEM_URL = 'https://api.ebay.com/buy/browse/v1/item';
 // eBay condition ID for "Used" — the umbrella condition for pre-owned/vintage items.
 const USED_CONDITION_ID = '3000';
 
+// Canadian marketplace — localizes results, currency (CAD), and item URLs to eBay.ca.
+const MARKETPLACE_ID = 'EBAY_CA';
+const PRICE_CURRENCY = 'CAD';
+
 // Item specifics that commonly carry the size on clothing/shoe listings, in
 // priority order — sellers use whichever their category template offers.
 const SIZE_ASPECT_NAMES = ['Size', 'Size Type', 'US Shoe Size', 'Shoe Size', 'UK Size', 'EU Size'];
@@ -36,7 +40,7 @@ function buildFilter(filters: SearchFilters): string | undefined {
   const min = filters.minPrice ?? '';
   const max = filters.maxPrice ?? '';
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    parts.push(`price:[${min}..${max}]`, 'priceCurrency:USD');
+    parts.push(`price:[${min}..${max}]`, `priceCurrency:${PRICE_CURRENCY}`);
   }
   if (filters.usedOnly) {
     parts.push(`conditionIds:{${USED_CONDITION_ID}}`);
@@ -56,7 +60,7 @@ async function fetchItemSize(itemId: string, token: string): Promise<string | un
     const response = await fetch(`${ITEM_URL}/${encodeURIComponent(itemId)}`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+        'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
       },
     });
     if (!response.ok) {
@@ -87,7 +91,7 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
   const response = await fetch(`${SEARCH_URL}?${params.toString()}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      'X-EBAY-C-MARKETPLACE-ID': 'EBAY_US',
+      'X-EBAY-C-MARKETPLACE-ID': MARKETPLACE_ID,
     },
   });
 
@@ -104,7 +108,7 @@ export async function searchEbay(filters: SearchFilters): Promise<NormalizedResu
     source: 'ebay' as const,
     title: item.title,
     price: item.price ? Number(item.price.value) : 0,
-    currency: item.price?.currency ?? 'USD',
+    currency: item.price?.currency ?? PRICE_CURRENCY,
     imageUrl: item.image?.imageUrl,
     itemUrl: item.itemWebUrl,
     condition: item.condition,
