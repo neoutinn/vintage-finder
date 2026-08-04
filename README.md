@@ -11,13 +11,16 @@ badge. This means a single search burns roughly (1 + number of results shown) ca
 against your daily quota instead of just 1 — still nowhere near the free tier's
 5,000 calls/day for personal use, but worth knowing if you ever raise the result limit.
 
-Packaged as a personal Windows desktop app (Electron), not a hosted website — everything
-runs locally on your machine.
+Two ways to run it: as a Windows desktop app (Electron, fully local) or as a hosted
+website at **https://vintage-finder.vercel.app** — works from any browser, phone
+included. The hosted version is behind a Basic Auth password prompt (ask the project
+owner for it) since it's reachable from the open internet; the desktop app never
+prompts for one, since it never leaves your machine (see `src/middleware.ts`).
 
 ## Stack
 
-Next.js 14 (App Router) + TypeScript for the app itself, wrapped in Electron for desktop
-packaging.
+Next.js 14 (App Router) + TypeScript for the app itself. Runs either wrapped in
+Electron for desktop packaging, or deployed to Vercel as a normal website.
 
 ## 1. Get an eBay API key
 
@@ -82,6 +85,22 @@ produce a Windows installer under `release/`. No custom app icon is set up yet �
 at `build/icon.ico` and uncomment the `icon:` line in `electron-builder.yml` if you want
 one.
 
+## 6. Hosted deployment (Vercel)
+
+The project is linked to Vercel project `neo-28aa/vintage-finder` and connected to this
+GitHub repo, so **every push to `main` auto-deploys** to
+[vintage-finder.vercel.app](https://vintage-finder.vercel.app). To deploy manually:
+
+```bash
+npx vercel --prod
+```
+
+Production environment variables (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`,
+`SITE_PASSWORD`) are set on Vercel directly, not from `.env.local` — see/update them
+with `npx vercel env ls` / `npx vercel env add <NAME> production`. `SITE_PASSWORD` is
+read by `src/middleware.ts`, which Basic-Auth-gates every route (page and API) on that
+deployment only; any username works, only the password is checked.
+
 ## Project structure
 
 ```
@@ -89,6 +108,7 @@ src/app/page.tsx                 # search UI, results grid
 src/app/api/search/route.ts      # eBay Browse API search
 src/lib/providers/ebay.ts        # eBay Browse API client (search + per-item size lookup)
 src/lib/ebayTokenCache.ts        # caches the eBay OAuth token between requests
+src/middleware.ts                # Basic Auth gate for the hosted deployment only
 src/components/                  # SearchBar, ResultCard, ProviderErrorBanner, etc.
 electron/main.ts                 # spawns the Next.js server, owns the app window
 electron-builder.yml             # Windows packaging config
